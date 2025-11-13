@@ -5,7 +5,10 @@ variable {α : Type} [Inhabited α]
 def rndSelect (l : List α) (n : Nat) : IO (List α) :=
   match n with
   | 0 => pure ([] : List α)
-  | m+1 => rndSelect l m >>= fun l' =>  IO.rand 0 (l.length - 1) >>= fun r => (pure (l[r]!::l'))
+  | m+1 =>
+    rndSelect l m >>= fun l' =>
+      IO.rand 0 (l.length - 1) >>= fun r =>
+        (pure (l[r]!::l'))
 
 -- The following codes are for test and you should not edit these.
 
