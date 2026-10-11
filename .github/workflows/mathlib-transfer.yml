@@ -1,0 +1,78 @@
+name: Mathlib v4.34.1 targeted cache transfer
+on:
+  push:
+    branches:
+      - chore/mathlib-4.34.1-transfer-20261011
+jobs:
+  mathlib-cache:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 40
+    steps:
+      - name: Install official Lean toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o elan-init.sh
+          sh elan-init.sh -y --default-toolchain leanprover/lean4:v4.34.1 --no-modify-path
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          "$HOME/.elan/bin/lean" --version
+      - name: Clone pinned Mathlib and download precompiled dependency cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.elan/bin:$PATH"
+          git clone -q --branch v4.34.1 --depth 1 https://github.com/leanprover-community/mathlib4.git mathlib4
+          cd mathlib4
+          cat lean-toolchain
+          lake exe cache get Mathlib.Data.Nat.Prime.Basic
+          printf 'import Mathlib.Data.Nat.Prime.Basic\n#check Nat.Prime\n#check Nat.prime_two\n' > MathlibSmoke.lean
+          lake env lean MathlibSmoke.lean
+          du -sh . .lake/build .lake/packages || true
+      - name: Pack and checksum partial Mathlib workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v zstd
+          tar -I 'zstd -T0 -7' -cf mathlib4-v4.34.1-prime-basic.tar.zst mathlib4
+          sha256sum mathlib4-v4.34.1-prime-basic.tar.zst > whole.sha256
+          split -b 190000000 -d -a 2 mathlib4-v4.34.1-prime-basic.tar.zst part-
+          sha256sum part-* > parts.sha256
+          cat whole.sha256 parts.sha256
+          wc -c part-*
+          test ! -f part-04
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mathlib-4.34.1-part-00
+          path: part-00
+          compression-level: 0
+          retention-days: 5
+      - uses: actions/upload-artifact@v4
+        if: hashFiles('part-01') != ''
+        with:
+          name: mathlib-4.34.1-part-01
+          path: part-01
+          compression-level: 0
+          retention-days: 5
+      - uses: actions/upload-artifact@v4
+        if: hashFiles('part-02') != ''
+        with:
+          name: mathlib-4.34.1-part-02
+          path: part-02
+          compression-level: 0
+          retention-days: 5
+      - uses: actions/upload-artifact@v4
+        if: hashFiles('part-03') != ''
+        with:
+          name: mathlib-4.34.1-part-03
+          path: part-03
+          compression-level: 0
+          retention-days: 5
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mathlib-4.34.1-checksums
+          path: |
+            whole.sha256
+            parts.sha256
+          retention-days: 5
