@@ -76,7 +76,9 @@ theorem sum_of_two_left_tails_not_one_tail (c d e : Rat) :
     jetAdd (leftTailJet c) (leftTailJet d) ≠ leftTailJet e := by
   intro h
   have hc := congrArg Jet2.coefficientOne h
-  simp [jetAdd, leftTailJet] at hc
+  have hbad : (1 : Rat) + 1 = 1 := by
+    simpa [jetAdd, leftTailJet] using hc
+  exact (by decide : (1 : Rat) + 1 ≠ 1) hbad
 
 /-- Even the doubling of one represented tail is absent from this family. -/
 theorem double_tail_not_representable (c e : Rat) :
