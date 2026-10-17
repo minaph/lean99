@@ -7,6 +7,7 @@ on:
     paths:
       - .github/workflows/build-paperproof-integration.yml
       - integration/patch.tar.gz.b64
+      - integration/review-fixes-v2.tar.gz.b64
   workflow_dispatch:
 
 permissions:
@@ -42,6 +43,8 @@ jobs:
           base64 -d integration-assets/integration/patch.tar.gz.b64 | tar -xz -C lean4web
           mkdir -p lean4web/Projects/PaperproofDemo/vendor/Paperproof
           cp -a paperproof/lean lean4web/Projects/PaperproofDemo/vendor/Paperproof/
+          base64 -d integration-assets/integration/review-fixes-v2.tar.gz.b64 | tar -xz -C lean4web
+          cp lean4web/integration-overrides/paperproof/ContextMenu.tsx paperproof/app/src/components/ProofTree/components/BoxEl/components/ContextMenu.tsx
           test -f lean4web/client/src/editor/PaperproofPanel.tsx
       - name: Setup Node
         uses: actions/setup-node@v4
