@@ -51,7 +51,7 @@ def leftTailPair (a b n : Nat) : Nat × Nat := (a, n * a + b)
 theorem left_tail_successor (a b n : Nat) :
     leftTailPair a b (n + 1) = cwStep (leftTailPair a b n) .L := by
   simp [leftTailPair, cwStep, Nat.succ_mul, Nat.add_assoc,
-    Nat.add_left_comm, Nat.add_comm]
+    Nat.add_left_comm]
 
 /-- Illustrative Calkin-Wilf finite computations. -/
 example : cwStep (1, 1) .L = (1, 2) := by decide
@@ -59,12 +59,12 @@ example : cwStep (1, 2) .R = (3, 2) := by decide
 
 /-- Degree-2 jets, representing first two formal coefficients of a tail. -/
 structure Jet2 where
-  coefficientOne : Int
-  coefficientTwo : Int
+  coefficientOne : Rat
+  coefficientTwo : Rat
   deriving Repr, DecidableEq
 
 /-- Formal first two coefficients of t/(1+c*t): t - c*t^2 + O(t^3). -/
-def leftTailJet (c : Int) : Jet2 := ⟨1, -c⟩
+def leftTailJet (c : Rat) : Jet2 := ⟨1, -c⟩
 
 def jetAdd (x y : Jet2) : Jet2 :=
   ⟨x.coefficientOne + y.coefficientOne,
@@ -72,14 +72,14 @@ def jetAdd (x y : Jet2) : Jet2 :=
 
 /-- The restricted left-tail family is not closed under addition,
     already at its first nonzero coefficient. -/
-theorem sum_of_two_left_tails_not_one_tail (c d e : Int) :
+theorem sum_of_two_left_tails_not_one_tail (c d e : Rat) :
     jetAdd (leftTailJet c) (leftTailJet d) ≠ leftTailJet e := by
   intro h
   have hc := congrArg Jet2.coefficientOne h
   simp [jetAdd, leftTailJet] at hc
 
 /-- Even the doubling of one represented tail is absent from this family. -/
-theorem double_tail_not_representable (c e : Int) :
+theorem double_tail_not_representable (c e : Rat) :
     jetAdd (leftTailJet c) (leftTailJet c) ≠ leftTailJet e := by
   exact sum_of_two_left_tails_not_one_tail c c e
 
