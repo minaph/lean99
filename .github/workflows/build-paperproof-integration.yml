@@ -67,6 +67,9 @@ jobs:
         shell: bash
         working-directory: lean4web
         run: npm ci --no-audit
+      - name: Type-check Lean4Web client
+        working-directory: lean4web
+        run: npx tsc --noEmit -p client/tsconfig.json
       - name: Build Lean4Web web client
         shell: bash
         working-directory: lean4web
