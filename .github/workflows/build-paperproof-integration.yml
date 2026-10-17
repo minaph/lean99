@@ -92,7 +92,7 @@ jobs:
       - name: Package integrated site
         shell: bash
         run: |
-          tar -czf lean4web-paperproof-20261018.tar.gz -C lean4web .
+          tar -czf lean4web-paperproof-20261018.tar.gz -C lean4web --exclude='./node_modules' --exclude='./client/node_modules' --exclude='./server/node_modules' --exclude='*/.lake' .
           sha256sum lean4web-paperproof-20261018.tar.gz > BUILD_SHA256SUMS
       - name: Upload integration build
         uses: actions/upload-artifact@v4
