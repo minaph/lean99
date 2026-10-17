@@ -1,0 +1,24 @@
+name: Transfinite Tree Lean 4.34.1 Proofs
+on:
+  push:
+    branches:
+      - research/transfinite-tree-proof-20261018
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          auto-config: "false"
+          use-github-cache: "false"
+      - name: Verify with Lean 4.34.1
+        run: |
+          elan toolchain install leanprover/lean4:v4.34.1
+          elan run leanprover/lean4:v4.34.1 lean --version
+          elan run leanprover/lean4:v4.34.1 lean research/TransfiniteTreeObstructions.lean
