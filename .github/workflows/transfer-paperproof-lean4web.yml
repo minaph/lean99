@@ -1,0 +1,57 @@
+name: Transfer Paperproof and Lean4Web sources
+
+on:
+  push:
+    branches:
+      - research/lean4web-paperproof-integration-20261018
+    paths:
+      - .github/workflows/transfer-paperproof-lean4web.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-sources:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout lean4web
+        uses: actions/checkout@v4
+        with:
+          repository: leanprover-community/lean4web
+          ref: 9c4cd4f4ed804b06a24257788894314c93008276
+          path: lean4web
+      - name: Checkout Paperproof
+        uses: actions/checkout@v4
+        with:
+          repository: Paper-Proof/paperproof
+          ref: 05c68e9cb8e881f9e971abb94efd231a269e0229
+          path: paperproof
+      - name: Create reproducible source archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          tar -czf dist/lean4web-source.tar.gz --exclude=.git lean4web
+          tar -czf dist/paperproof-source.tar.gz --exclude=.git paperproof
+          (cd dist && sha256sum *.tar.gz > SHA256SUMS)
+          cat dist/SHA256SUMS
+          du -h dist/*
+      - name: Upload lean4web source
+        uses: actions/upload-artifact@v4
+        with:
+          name: lean4web-source-20261018
+          path: dist/lean4web-source.tar.gz
+          retention-days: 5
+      - name: Upload Paperproof source
+        uses: actions/upload-artifact@v4
+        with:
+          name: paperproof-source-20261018
+          path: dist/paperproof-source.tar.gz
+          retention-days: 5
+      - name: Upload manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-checksums-20261018
+          path: dist/SHA256SUMS
+          retention-days: 5
