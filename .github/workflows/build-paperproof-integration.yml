@@ -123,6 +123,20 @@ jobs:
           wait-on: http://localhost:3000
           spec: cypress/e2e/paperproof.cy.ts
           browser: chrome
+      - name: Configure Python for reproducer
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run documented WebSocket reproducer
+        shell: bash
+        working-directory: lean4web
+        run: |
+          python -m pip install aiohttp
+          npm start > server-for-probe.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          npx wait-on -t 120000 http://localhost:3000
+          LEAN4WEB_URL=http://localhost:3000 python tests/local_websocket_probe.example.py
       - name: Attach browser test screenshots
         if: always()
         uses: actions/upload-artifact@v4
