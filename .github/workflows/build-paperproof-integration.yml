@@ -108,3 +108,27 @@ jobs:
             lean4web-paperproof-20261018.tar.gz
             BUILD_SHA256SUMS
           retention-days: 5
+
+      - name: Install Cypress browser for review checks
+        working-directory: lean4web
+        env:
+          CYPRESS_INSTALL_BINARY: ""
+        run: npx cypress install
+      - name: Browser integration smoke tests
+        uses: cypress-io/github-action@v7
+        with:
+          working-directory: lean4web
+          install: false
+          start: npm start
+          wait-on: http://localhost:3000
+          spec: cypress/e2e/paperproof.cy.ts
+          browser: chrome
+      - name: Attach browser test screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paperproof-review-e2e-artifacts
+          path: |
+            lean4web/cypress/screenshots
+            lean4web/cypress/videos
+          retention-days: 5
