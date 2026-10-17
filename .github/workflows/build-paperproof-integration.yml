@@ -68,16 +68,12 @@ jobs:
         shell: bash
         working-directory: lean4web
         run: npm run build:client
-      - name: Install Lean toolchain
-        uses: leanprover/lean-action@v1
-        with:
-          lake-package-directory: lean4web/Projects/PaperproofDemo
-          auto-config: false
-          use-mathlib-cache: false
-          use-github-cache: false
-          build: false
-          test: false
-          lint: false
+      - name: Install Lean 4.34.1 toolchain
+        shell: bash
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain leanprover/lean4:v4.34.1
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          "$HOME/.elan/bin/lean" --version
       - name: Verify Paperproof under Lean 4.34.1
         shell: bash
         working-directory: lean4web/Projects/PaperproofDemo
