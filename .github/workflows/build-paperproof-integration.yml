@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - research/lean4web-paperproof-integration-20261018
+      - feature/paperproof-dual-pane-20261018
     paths:
       - .github/workflows/build-paperproof-integration.yml
       - integration/patch.tar.gz.b64
       - integration/review-fixes-v2.tar.gz.b64
+      - integration/layout-ui-v4.tar.gz.b64
   workflow_dispatch:
 
 permissions:
@@ -45,6 +47,7 @@ jobs:
           cp -a paperproof/lean lean4web/Projects/PaperproofDemo/vendor/Paperproof/
           base64 -d integration-assets/integration/review-fixes-v2.tar.gz.b64 | tar -xz -C lean4web
           cp lean4web/integration-overrides/paperproof/ContextMenu.tsx paperproof/app/src/components/ProofTree/components/BoxEl/components/ContextMenu.tsx
+          base64 -d integration-assets/integration/layout-ui-v4.tar.gz.b64 | tar -xz -C lean4web
           test -f lean4web/client/src/editor/PaperproofPanel.tsx
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -121,7 +124,7 @@ jobs:
           install: false
           start: npm start
           wait-on: http://localhost:3000
-          spec: cypress/e2e/paperproof.cy.ts
+          spec: cypress/e2e/paperproof.cy.ts,cypress/e2e/paperproof-layout.cy.ts
           browser: chrome
       - name: Configure Python for reproducer
         uses: actions/setup-python@v5
