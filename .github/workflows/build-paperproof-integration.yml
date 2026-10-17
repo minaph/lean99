@@ -1,0 +1,108 @@
+name: Build Lean4Web Paperproof integration
+
+on:
+  push:
+    branches:
+      - research/lean4web-paperproof-integration-20261018
+    paths:
+      - .github/workflows/build-paperproof-integration.yml
+      - integration/patch.tar.gz.b64
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      CYPRESS_INSTALL_BINARY: "0"
+    steps:
+      - name: Checkout integration patch
+        uses: actions/checkout@v4
+        with:
+          path: integration-assets
+      - name: Checkout Lean4Web
+        uses: actions/checkout@v4
+        with:
+          repository: leanprover-community/lean4web
+          ref: 9c4cd4f4ed804b06a24257788894314c93008276
+          path: lean4web
+      - name: Checkout Paperproof
+        uses: actions/checkout@v4
+        with:
+          repository: Paper-Proof/paperproof
+          ref: 05c68e9cb8e881f9e971abb94efd231a269e0229
+          path: paperproof
+      - name: Apply patch, copy Lean library
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d integration-assets/integration/patch.tar.gz.b64 | tar -xz -C lean4web
+          mkdir -p lean4web/Projects/PaperproofDemo/vendor/Paperproof
+          cp -a paperproof/lean lean4web/Projects/PaperproofDemo/vendor/Paperproof/
+          test -f lean4web/client/src/editor/PaperproofPanel.tsx
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - name: Install Paperproof renderer dependencies
+        shell: bash
+        working-directory: paperproof/app
+        run: npm install --no-package-lock --legacy-peer-deps --ignore-scripts --no-audit
+      - name: Build original Paperproof visualizer
+        shell: bash
+        working-directory: paperproof/app
+        run: node esbuild.prod.js
+      - name: Install original Paperproof in web public assets
+        shell: bash
+        run: |
+          cp paperproof/extension/dist/indexBrowser.js lean4web/client/public/paperproof/indexBrowser.js
+          cp paperproof/extension/dist/indexBrowser.css lean4web/client/public/paperproof/indexBrowser.css
+      - name: Install Lean4Web dependencies
+        shell: bash
+        working-directory: lean4web
+        run: npm ci --no-audit
+      - name: Build Lean4Web web client
+        shell: bash
+        working-directory: lean4web
+        run: npm run build:client
+      - name: Install Lean toolchain
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: lean4web/Projects/PaperproofDemo
+          auto-config: false
+          use-mathlib-cache: false
+          use-github-cache: false
+          build: false
+          test: false
+          lint: false
+      - name: Verify Paperproof under Lean 4.34.1
+        shell: bash
+        working-directory: lean4web/Projects/PaperproofDemo
+        run: |
+          lake update
+          lake build
+          lake env lean PaperproofDemo.lean
+      - name: Validate bundled assets
+        shell: bash
+        run: |
+          test -s lean4web/client/dist/index.html
+          test -s lean4web/client/dist/paperproof/indexBrowser.js
+          test -s lean4web/client/dist/paperproof/indexBrowser.css
+          grep -q 'Paperproof' lean4web/client/dist/paperproof/index.html
+          echo "Build and assets passed"
+      - name: Package integrated site
+        shell: bash
+        run: |
+          tar -czf lean4web-paperproof-20261018.tar.gz -C lean4web .
+          sha256sum lean4web-paperproof-20261018.tar.gz > BUILD_SHA256SUMS
+      - name: Upload integration build
+        uses: actions/upload-artifact@v4
+        with:
+          name: lean4web-paperproof-20261018
+          path: |
+            lean4web-paperproof-20261018.tar.gz
+            BUILD_SHA256SUMS
+          retention-days: 5
