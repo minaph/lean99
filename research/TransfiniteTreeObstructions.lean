@@ -59,7 +59,7 @@ example : cwStep (1, 2) .R = (3, 2) := by decide
 
 /-- Degree-2 jets, representing first two formal coefficients of a tail. -/
 structure Jet2 where
-  coefficientOne : Rat
+  coefficientOne : Int
   coefficientTwo : Rat
   deriving Repr, DecidableEq
 
@@ -76,9 +76,9 @@ theorem sum_of_two_left_tails_not_one_tail (c d e : Rat) :
     jetAdd (leftTailJet c) (leftTailJet d) ≠ leftTailJet e := by
   intro h
   have hc := congrArg Jet2.coefficientOne h
-  have hbad : (1 : Rat) + 1 = 1 := by
+  have hbad : (1 : Int) + 1 = 1 := by
     simpa [jetAdd, leftTailJet] using hc
-  exact (by decide : (1 : Rat) + 1 ≠ 1) hbad
+  exact (by decide : (1 : Int) + 1 ≠ 1) hbad
 
 /-- Even the doubling of one represented tail is absent from this family. -/
 theorem double_tail_not_representable (c e : Rat) :
